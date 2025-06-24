@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF & URL Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            background: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #6c757d;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="file"],
+        .input-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group input[type="file"]:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .content-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            min-height: 400px;
+            border: 2px dashed #dee2e6;
+            margin-bottom: 30px;
+        }
+
+        .content-section.has-content {
+            border-color: #28a745;
+            background: white;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .content-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .content-source {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .content-text {
+            line-height: 1.6;
+            color: #495057;
+            white-space: pre-wrap;
+            max-height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            border: 2px dashed #dee2e6;
+        }
+
+        .summary-section.has-summary {
+            border-color: #17a2b8;
+            background: white;
+        }
+
+        .summary-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .summary-btn {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .summary-btn.selected {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+
+        .summary-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .summary-btn-icon {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .summary-btn-text {
+            font-size: 0.9rem;
+        }
+
+        .summary-content {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            min-height: 200px;
+            line-height: 1.6;
+            color: #495057;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .summary-type {
+            font-size: 0.9rem;
+            color: #6c757d;
+            background: #e9ecef;
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+
+        .audio-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+            margin-top: 20px;
+        }
+
+        .audio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .audio-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .voice-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .voice-selector label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .voice-selector select {
+            padding: 8px 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+        }
+
+        .audio-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .audio-player {
+            flex: 1;
+            height: 40px;
+            border-radius: 8px;
+            background: white;
+            border: 1px solid #e9ecef;
+        }
+
+        .audio-player::-webkit-media-controls-panel {
+            background-color: white;
+        }
+
+        .audio-player::-webkit-media-controls-play-button {
+            background-color: #667eea;
+            border-radius: 50%;
+        }
+
+        .generate-audio-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .generate-audio-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .generate-audio-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .audio-status {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e9ecef;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .success {
+            color: #155724;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .file-info {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: #1976d2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .tab-content {
+                padding: 20px;
+            }
+
+            .summary-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .audio-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .voice-selector {
+                justify-content: center;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>YAP-YAP</h1>
+            <p>Understand Content Faster</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('pdf')">📄 PDF</button>
+            <button class="tab" onclick="switchTab('url')">🌐 URL</button>
+        </div>
+
+        <!-- PDF Tab -->
+        <div id="pdf-tab" class="tab-content active">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="pdf-file">Select PDF File:</label>
+                    <input type="file" id="pdf-file" accept=".pdf" onchange="handleFileSelect()">
+                </div>
+                <button class="btn" onclick="readPDF()" id="pdf-btn" disabled>Read PDF</button>
+            </div>
+
+            <div class="content-section" id="pdf-content">
+                <div class="content-header">
+                    <div class="content-title">PDF Content</div>
+                    <div class="content-source" id="pdf-source">No file selected</div>
+                </div>
+                <div class="content-text" id="pdf-text">
+                    Upload a PDF file to extract and display its content here.
+                </div>
+            </div>
+
+            <!-- Summary Section for PDF -->
+            <div class="summary-section" id="pdf-summary-section">
+                <div class="summary-header">
+                    <div class="summary-title">AI Summary & Audio Script</div>
+                    <div class="summary-type" id="pdf-summary-type">Select a summary type</div>
+                </div>
+                
+                <div class="summary-buttons">
+                    <button class="summary-btn" onclick="generateSummary('pdf', '30_second_tldr')" id="pdf-30-tldr">
+                        <span class="summary-btn-icon">⚡</span>
+                        <span class="summary-btn-text">30 Second TLDR</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('pdf', '60_second_summary')" id="pdf-60-summary">
+                        <span class="summary-btn-icon">📝</span>
+                        <span class="summary-btn-text">60 Second Summary</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('pdf', '5_minute_explainer')" id="pdf-5-min">
+                        <span class="summary-btn-icon">🎯</span>
+                        <span class="summary-btn-text">5 Minute Explainer</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('pdf', 'explain_like_5')" id="pdf-el5">
+                        <span class="summary-btn-icon">🧒</span>
+                        <span class="summary-btn-text">Explain Like I'm 5</span>
+                    </button>
+                </div>
+
+                <div class="summary-content" id="pdf-summary-content">
+                    Select one of the summary types above to generate an AI-powered audio script summary.
+                </div>
+
+                <!-- Audio Section for PDF -->
+                <div class="audio-section" id="pdf-audio-section" style="display: none;">
+                    <div class="audio-header">
+                        <div class="audio-title">🎙️ Audio Generation</div>
+                        <div class="voice-selector">
+                            <label for="pdf-voice">Voice:</label>
+                            <select id="pdf-voice">
+                                <option value="alloy">Alloy (Neutral)</option>
+                                <option value="echo">Echo (Male)</option>
+                                <option value="fable">Fable (Male)</option>
+                                <option value="onyx">Onyx (Male)</option>
+                                <option value="nova">Nova (Female)</option>
+                                <option value="shimmer">Shimmer (Female)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="audio-controls">
+                        <audio id="pdf-audio-player" class="audio-player" controls style="display: none;"></audio>
+                        <button class="generate-audio-btn" onclick="generateAudio('pdf')" id="pdf-generate-audio-btn">
+                            🎵 Generate Audio
+                        </button>
+                    </div>
+                    
+                    <div class="audio-status" id="pdf-audio-status">
+                        Click "Generate Audio" to create an audio version of the summary.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- URL Tab -->
+        <div id="url-tab" class="tab-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="url-input">Enter URL:</label>
+                    <input type="text" id="url-input" placeholder="https://example.com" onkeypress="handleUrlKeyPress(event)">
+                </div>
+                <button class="btn" onclick="readURL()" id="url-btn">Read URL</button>
+            </div>
+
+            <div class="content-section" id="url-content">
+                <div class="content-header">
+                    <div class="content-title">URL Content</div>
+                    <div class="content-source" id="url-source">No URL entered</div>
+                </div>
+                <div class="content-text" id="url-text">
+                    Enter a URL to fetch and display its content here.
+                </div>
+            </div>
+
+            <!-- Summary Section for URL -->
+            <div class="summary-section" id="url-summary-section">
+                <div class="summary-header">
+                    <div class="summary-title">AI Summary & Audio Script</div>
+                    <div class="summary-type" id="url-summary-type">Select a summary type</div>
+                </div>
+                
+                <div class="summary-buttons">
+                    <button class="summary-btn" onclick="generateSummary('url', '30_second_tldr')" id="url-30-tldr">
+                        <span class="summary-btn-icon">⚡</span>
+                        <span class="summary-btn-text">30 Second TLDR</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('url', '60_second_summary')" id="url-60-summary">
+                        <span class="summary-btn-icon">📝</span>
+                        <span class="summary-btn-text">60 Second Summary</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('url', '5_minute_explainer')" id="url-5-min">
+                        <span class="summary-btn-icon">🎯</span>
+                        <span class="summary-btn-text">5 Minute Explainer</span>
+                    </button>
+                    <button class="summary-btn" onclick="generateSummary('url', 'explain_like_5')" id="url-el5">
+                        <span class="summary-btn-icon">🧒</span>
+                        <span class="summary-btn-text">Explain Like I'm 5</span>
+                    </button>
+                </div>
+
+                <div class="summary-content" id="url-summary-content">
+                    Select one of the summary types above to generate an AI-powered audio script summary.
+                </div>
+
+                <!-- Audio Section for URL -->
+                <div class="audio-section" id="url-audio-section" style="display: none;">
+                    <div class="audio-header">
+                        <div class="audio-title">🎙️ Audio Generation</div>
+                        <div class="voice-selector">
+                            <label for="url-voice">Voice:</label>
+                            <select id="url-voice">
+                                <option value="alloy">Alloy (Neutral)</option>
+                                <option value="echo">Echo (Male)</option>
+                                <option value="fable">Fable (Male)</option>
+                                <option value="onyx">Onyx (Male)</option>
+                                <option value="nova">Nova (Female)</option>
+                                <option value="shimmer">Shimmer (Female)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="audio-controls">
+                        <audio id="url-audio-player" class="audio-player" controls style="display: none;"></audio>
+                        <button class="generate-audio-btn" onclick="generateAudio('url')" id="url-generate-audio-btn">
+                            🎵 Generate Audio
+                        </button>
+                    </div>
+                    
+                    <div class="audio-status" id="url-audio-status">
+                        Click "Generate Audio" to create an audio version of the summary.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:white; padding:2rem; border-radius:10px; max-width:400px; margin:auto; position:relative;">
+            <h2>Settings</h2>
+            <label for="user-api-key">OpenAI API Key:</label>
+            <input type="password" id="user-api-key" style="width:100%; margin-bottom:1rem;" placeholder="sk-...">
+            <button onclick="saveApiKey()" class="btn">Save</button>
+            <button onclick="closeSettings()" class="btn" style="background:#ccc; color:#333; margin-left:10px;">Cancel</button>
+            <div id="settings-status" style="margin-top:1rem; color:green; display:none;">Saved!</div>
+        </div>
+    </div>
+    <button onclick="openSettings()" style="position:fixed;top:20px;right:20px;z-index:1100;" class="btn">⚙️ Settings</button>
+
+    <script>
+        let currentContent = '';
+        let currentSource = '';
+        let currentSummary = '';
+        const ENCRYPTION_SECRET = "yapyap-user-key-v1";
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + '-tab').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        function handleFileSelect() {
+            const fileInput = document.getElementById('pdf-file');
+            const btn = document.getElementById('pdf-btn');
+            
+            if (fileInput.files.length > 0) {
+                btn.disabled = false;
+                document.getElementById('pdf-source').textContent = fileInput.files[0].name;
+            } else {
+                btn.disabled = true;
+                document.getElementById('pdf-source').textContent = 'No file selected';
+            }
+        }
+
+        function handleUrlKeyPress(event) {
+            if (event.key === 'Enter') {
+                readURL();
+            }
+        }
+
+        async function readPDF() {
+            const fileInput = document.getElementById('pdf-file');
+            const contentSection = document.getElementById('pdf-content');
+            const contentText = document.getElementById('pdf-text');
+            const btn = document.getElementById('pdf-btn');
+            
+            if (!fileInput.files.length) {
+                showError('Please select a PDF file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('pdf_file', fileInput.files[0]);
+
+            btn.disabled = true;
+            contentSection.classList.remove('has-content');
+            contentText.innerHTML = '<div class="loading">Processing PDF...</div>';
+
+            try {
+                const response = await fetch('/read_pdf', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    contentText.textContent = data.content;
+                    contentSection.classList.add('has-content');
+                    document.getElementById('pdf-source').textContent = data.filename;
+                    
+                    // Store content for summary generation
+                    currentContent = data.content;
+                    currentSource = data.filename;
+                    
+                    // Enable summary buttons
+                    enableSummaryButtons('pdf');
+                } else {
+                    showError(data.error || 'Error processing PDF');
+                    contentText.textContent = 'Upload a PDF file to extract and display its content here.';
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+                contentText.textContent = 'Upload a PDF file to extract and display its content here.';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function readURL() {
+            const urlInput = document.getElementById('url-input');
+            const contentSection = document.getElementById('url-content');
+            const contentText = document.getElementById('url-text');
+            const btn = document.getElementById('url-btn');
+            
+            const url = urlInput.value.trim();
+            if (!url) {
+                showError('Please enter a URL first.');
+                return;
+            }
+
+            btn.disabled = true;
+            contentSection.classList.remove('has-content');
+            contentText.innerHTML = '<div class="loading">Fetching content...</div>';
+
+            try {
+                const response = await fetch('/read_url', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    contentText.textContent = data.content;
+                    contentSection.classList.add('has-content');
+                    document.getElementById('url-source').textContent = data.url;
+                    
+                    // Store content for summary generation
+                    currentContent = data.content;
+                    currentSource = data.url;
+                    
+                    // Enable summary buttons
+                    enableSummaryButtons('url');
+                } else {
+                    showError(data.error || 'Error fetching URL');
+                    contentText.textContent = 'Enter a URL to fetch and display its content here.';
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+                contentText.textContent = 'Enter a URL to fetch and display its content here.';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function enableSummaryButtons(type) {
+            const buttons = document.querySelectorAll(`#${type}-summary-section .summary-btn`);
+            buttons.forEach(btn => {
+                btn.disabled = false;
+            });
+        }
+
+        function disableSummaryButtons(type) {
+            const buttons = document.querySelectorAll(`#${type}-summary-section .summary-btn`);
+            buttons.forEach(btn => {
+                btn.disabled = true;
+            });
+        }
+
+        function selectSummaryButton(type, summaryType) {
+            // Remove selected class from all buttons in this section
+            const buttons = document.querySelectorAll(`#${type}-summary-section .summary-btn`);
+            buttons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked button
+            const selectedBtn = document.getElementById(`${type}-${summaryType.replace(/_/g, '-')}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('selected');
+            }
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').style.display = 'flex';
+            const encrypted = localStorage.getItem('yapyap_api_key');
+            if (encrypted) {
+                try {
+                    const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_SECRET);
+                    const originalText = bytes.toString(CryptoJS.enc.Utf8);
+                    document.getElementById('user-api-key').value = originalText;
+                } catch {}
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+            document.getElementById('settings-status').style.display = 'none';
+        }
+
+        function saveApiKey() {
+            const key = document.getElementById('user-api-key').value.trim();
+            if (key.startsWith('sk-')) {
+                const encrypted = CryptoJS.AES.encrypt(key, ENCRYPTION_SECRET).toString();
+                localStorage.setItem('yapyap_api_key', encrypted);
+                document.getElementById('settings-status').style.display = 'block';
+                setTimeout(closeSettings, 1000);
+            } else {
+                alert('Please enter a valid OpenAI API key.');
+            }
+        }
+
+        function getUserApiKey() {
+            const encrypted = localStorage.getItem('yapyap_api_key');
+            if (!encrypted) return null;
+            try {
+                const bytes = CryptoJS.AES.decrypt(encrypted, ENCRYPTION_SECRET);
+                return bytes.toString(CryptoJS.enc.Utf8);
+            } catch { return null; }
+        }
+
+        async function generateSummary(type, summaryType) {
+            if (!currentContent) {
+                showError('Please load content first before generating a summary.');
+                return;
+            }
+            selectSummaryButton(type, summaryType);
+            const summarySection = document.getElementById(`${type}-summary-section`);
+            const summaryContent = document.getElementById(`${type}-summary-content`);
+            const summaryTypeDisplay = document.getElementById(`${type}-summary-type`);
+            const audioSection = document.getElementById(`${type}-audio-section`);
+            disableSummaryButtons(type);
+            summarySection.classList.remove('has-summary');
+            summaryContent.innerHTML = '<div class="loading">Generating AI summary...</div>';
+            audioSection.style.display = 'none';
+            const typeLabels = {
+                '30_second_tldr': '30 Second TLDR',
+                '60_second_summary': '60 Second Summary',
+                '5_minute_explainer': '5 Minute Explainer',
+                'explain_like_5': 'Explain Like I\'m 5'
+            };
+            summaryTypeDisplay.textContent = typeLabels[summaryType];
+            try {
+                const userKey = getUserApiKey();
+                const headers = { 'Content-Type': 'application/json' };
+                if (userKey) headers['X-User-OpenAI-Key'] = userKey;
+                const response = await fetch('/generate_summary', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ content: currentContent, summary_type: summaryType })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    summaryContent.textContent = data.summary;
+                    summarySection.classList.add('has-summary');
+                    currentSummary = data.summary;
+                    audioSection.style.display = 'block';
+                    resetAudioSection(type);
+                } else {
+                    showError(data.error || 'Error generating summary');
+                    summaryContent.textContent = 'Select one of the summary types above to generate an AI-powered audio script summary.';
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+                summaryContent.textContent = 'Select one of the summary types above to generate an AI-powered audio script summary.';
+            } finally {
+                enableSummaryButtons(type);
+            }
+        }
+
+        function resetAudioSection(type) {
+            const audioPlayer = document.getElementById(`${type}-audio-player`);
+            const audioStatus = document.getElementById(`${type}-audio-status`);
+            const generateBtn = document.getElementById(`${type}-generate-audio-btn`);
+            
+            audioPlayer.style.display = 'none';
+            audioPlayer.src = '';
+            audioStatus.textContent = 'Click "Generate Audio" to create an audio version of the summary.';
+            generateBtn.disabled = false;
+            generateBtn.textContent = '🎵 Generate Audio';
+        }
+
+        async function generateAudio(type) {
+            if (!currentSummary) {
+                showError('Please generate a summary first before creating audio.');
+                return;
+            }
+            const audioPlayer = document.getElementById(`${type}-audio-player`);
+            const audioStatus = document.getElementById(`${type}-audio-status`);
+            const generateBtn = document.getElementById(`${type}-generate-audio-btn`);
+            const voiceSelect = document.getElementById(`${type}-voice`);
+            generateBtn.disabled = true;
+            generateBtn.textContent = '🎵 Generating...';
+            audioStatus.textContent = 'Generating audio from the summary...';
+            try {
+                const userKey = getUserApiKey();
+                const headers = { 'Content-Type': 'application/json' };
+                if (userKey) headers['X-User-OpenAI-Key'] = userKey;
+                const response = await fetch('/generate_audio', {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ text: currentSummary, voice: voiceSelect.value })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    const audioBlob = new Blob([Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))], { type: 'audio/mpeg' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.style.display = 'block';
+                    audioStatus.textContent = `Audio generated successfully with ${voiceSelect.options[voiceSelect.selectedIndex].text}!`;
+                    generateBtn.textContent = '🎵 Regenerate Audio';
+                    generateBtn.disabled = false;
+                } else {
+                    showError(data.error || 'Error generating audio');
+                    audioStatus.textContent = 'Click "Generate Audio" to create an audio version of the summary.';
+                    generateBtn.textContent = '🎵 Generate Audio';
+                    generateBtn.disabled = false;
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+                audioStatus.textContent = 'Click "Generate Audio" to create an audio version of the summary.';
+                generateBtn.textContent = '🎵 Generate Audio';
+                generateBtn.disabled = false;
+            }
+        }
+
+        function showError(message) {
+            // Remove existing error messages
+            document.querySelectorAll('.error').forEach(el => el.remove());
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            // Insert error at the top of the current tab content
+            const activeTab = document.querySelector('.tab-content.active');
+            activeTab.insertBefore(errorDiv, activeTab.firstChild);
+            
+            // Auto-remove error after 5 seconds
+            setTimeout(() => {
+                if (errorDiv.parentNode) {
+                    errorDiv.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 
